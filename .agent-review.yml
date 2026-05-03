@@ -1,0 +1,22 @@
+review:
+  exclude_paths:
+    - "*.md"
+  severity_threshold: "info"
+  max_comments: 20
+
+rules:
+  focus:
+    - security
+    - error-handling
+    - performance
+  ignore:
+    - style
+  custom_rules: |
+    - All database queries must use parameterized statements
+    - Never use eval() or exec() on user input
+    - Never use shell=True in subprocess calls
+    - Use bcrypt or argon2 for password hashing, not MD5/SHA
+
+coder:
+  trigger_label: "auto-fix"
+  max_retries: 3
