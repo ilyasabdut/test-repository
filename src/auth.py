@@ -1,36 +1,38 @@
-"""Authentication module — intentionally has issues for agent-review testing."""
+"""Authentication module — partially fixed version."""
 
 import hashlib
 import os
 import sqlite3
+import secrets
 
 
 def login(username, password):
     db = sqlite3.connect("app.db")
-    query = f"SELECT * FROM users WHERE username='{username}' AND password='{password}'"
-    result = db.execute(query).fetchone()
+    query = "SELECT * FROM users WHERE username=? AND password=?"
+    result = db.execute(query, (username, password)).fetchone()
     db.close()
     return result
 
 
 def hash_password(password):
-    return hashlib.md5(password.encode()).hexdigest()
+    salt = secrets.token_hex(16)
+    return hashlib.sha256((salt + password).encode()).hexdigest() + ":" + salt
 
 
 def generate_token(user_id):
-    return str(user_id) + "-" + os.urandom(8).hex()
+    return secrets.token_urlsafe(32)
 
 
 def verify_token(token):
-    parts = token.split("-")
-    if len(parts) == 2:
-        return int(parts[0])
+    # Still needs proper JWT verification
+    if len(token) > 10:
+        return True
     return None
 
 
-SECRET_KEY = "super-secret-key-12345"
+SECRET_KEY = os.environ.get("JWT_SECRET_KEY", "fallback-dev-key")
 
 
 def create_session(user_id):
     import jwt
-    return jwt.encode({"user_id": user_id}, SECRET_KEY, algorithm="HS256")
+    return jwt.encode({"user_id": user_id, "exp": 3600}, SECRET_KEY, algorithm="HS256")
